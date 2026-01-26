@@ -8,12 +8,55 @@ export default function SignupPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simulate signup
-        window.location.href = '/audit';
+        setLoading(true);
+        setError('');
+
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Something went wrong');
+            }
+
+            setSuccess(true);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (success) {
+        return (
+            <div className="min-h-screen bg-[#F9F9F7] flex flex-col justify-center relative overflow-hidden">
+                <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 text-center">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-emerald-100">
+                        <Mail size={40} />
+                    </div>
+                    <h2 className="text-4xl font-bold font-playfair text-[#1A1A1A] mb-4">Check Your <span className="text-[#C5A059] italic">Email</span></h2>
+                    <p className="text-slate-500 font-light mb-10 leading-relaxed">
+                        We&apos;ve sent a verification link to <span className="font-bold text-slate-800">{email}</span>. Please confirm your email to activate your account and access the AI Audit tool.
+                    </p>
+                    <div className="space-y-4">
+                        <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Didn&apos;t receive it?</p>
+                        <button onClick={() => setSuccess(false)} className="text-[#D80000] font-bold hover:underline">Try another email</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#F9F9F7] flex flex-col justify-center relative overflow-hidden selection:bg-[#C5A059]/30">
@@ -38,6 +81,13 @@ export default function SignupPage() {
                 <p className="text-slate-500 font-light mb-10">Create your account to unlock professional AI reporting and ROI insights.</p>
 
                 <div className="premium-card p-8 sm:p-10">
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-center gap-3">
+                            <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+                            {error}
+                        </div>
+                    )}
+
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-2 group">
                             <label htmlFor="name" className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] group-focus-within:text-[#C5A059] transition-colors">Full Name</label>
@@ -94,8 +144,13 @@ export default function SignupPage() {
                         </div>
 
                         <div className="pt-2">
-                            <button type="submit" className="btn-primary w-full h-14 text-lg shadow-2xl">
-                                Create My Account
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="btn-primary w-full h-14 text-lg shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed group"
+                            >
+                                {loading ? 'Processing...' : 'Create My Account'}
+                                {!loading && <ArrowLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />}
                             </button>
                         </div>
                     </form>

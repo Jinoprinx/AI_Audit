@@ -1,28 +1,38 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-    ClipboardCheck,
+    ChevronLeft,
+    ChevronRight,
+    Zap,
+    Search,
+    BarChart3,
+    DollarSign,
+    Shield,
+    Target,
+    Users,
+    Mail,
+    Globe,
+    Lock,
+    Cpu,
+    Webhook,
     Database,
+    LineChart,
+    PieChart,
+    AlertCircle,
+    CheckCircle2,
+    ArrowRight,
+    Printer,
+    Download,
+    Share2,
+    ClipboardCheck,
     TrendingUp,
     ShieldAlert,
-    Calculator,
-    FileText,
-    ChevronRight,
-    ChevronLeft,
-    Plus,
-    Trash2,
-    Save,
-    Printer,
-    CheckCircle,
-    AlertCircle,
-    Zap,
-    Target,
-    BarChart3,
-    Users,
-    DollarSign,
     Clock,
-    Mail
+    Plus,
+    CheckCircle,
+    Trash2,
+    FileText
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -70,11 +80,16 @@ const TextInput = ({ value, onChange, placeholder, type = "text" }: any) => (
 
 // --- Main Application ---
 
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+
 export default function AIAuditTool() {
+    const { data: session, status } = useSession();
+    const router = useRouter();
     const [step, setStep] = useState(1);
     const totalSteps = 7;
 
-    // --- State Management ---
+    // --- State Management (ALL hooks BEFORE any conditional returns) ---
     const [formData, setFormData] = useState({
         // 1. Client Info
         clientName: '',
@@ -119,9 +134,52 @@ export default function AIAuditTool() {
         employeesCount: 1,
     });
 
+    // Auth Guard
+    useEffect(() => {
+        if (status === 'unauthenticated') {
+            router.push('/auth/login?callbackUrl=/audit');
+        }
+    }, [status, router]);
+
     const handleInputChange = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
+
+    // --- Conditional Returns (AFTER all hooks) ---
+    if (status === 'loading') {
+        return (
+            <div className="min-h-screen bg-[#F9F9F7] flex items-center justify-center">
+                <Zap className="animate-spin text-[#C5A059]" size={40} />
+            </div>
+        );
+    }
+
+    if (!session) return null;
+
+    // Verification Guard
+    if (!(session.user as any).emailVerified) {
+        return (
+            <div className="min-h-screen bg-[#F9F9F7] flex items-center justify-center p-4">
+                <div className="premium-card p-12 max-w-lg text-center space-y-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#C5A059]/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                    <div className="w-20 h-20 bg-amber-50 text-[#C5A059] rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-amber-50">
+                        <Shield size={40} />
+                    </div>
+                    <h2 className="text-4xl font-bold font-playfair text-slate-900 leading-tight">Verification <span className="text-[#C5A059] italic">Required</span></h2>
+                    <p className="text-slate-500 font-light leading-relaxed">
+                        To maintain project integrity and security, please verify your email address. We&apos;ve sent a link to <span className="font-bold text-slate-800">{session.user?.email}</span>.
+                    </p>
+                    <div className="pt-4 space-y-4">
+                        <button onClick={() => window.location.reload()} className="btn-primary w-full shadow-2xl">
+                            I&apos;ve Verified My Email
+                        </button>
+                        <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Haven&apos;t received the link?</p>
+                        <button className="text-[#D80000] font-bold hover:underline">Resend Verification</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const handleNestedChange = (parent: string, key: string, value: any) => {
         setFormData((prev: any) => ({

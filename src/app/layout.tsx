@@ -19,6 +19,8 @@ export const metadata: Metadata = {
     description: "Find out how AI-ready your business is. Identify key areas to apply AI to make more money, save more money, and save more time.",
 };
 
+import { AuthProvider } from "@/components/providers/AuthProvider";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -27,7 +29,9 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${inter.variable} ${playfair.variable} font-sans`}>
-                {children}
+                <AuthProvider>
+                    {children}
+                </AuthProvider>
             </body>
         </html>
     );

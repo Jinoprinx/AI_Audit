@@ -1,0 +1,135 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 26, 26, 26;
+  --background-start-rgb: 249, 249, 247;
+  --background-end-rgb: 249, 249, 247;
+  --font-inter: 'Inter', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+
+  /* Brand Colors */
+  --primary: #C5A059;
+  --primary-glow: rgba(197, 160, 89, 0.15);
+  --accent: #D80000;
+  --accent-glow: rgba(216, 0, 0, 0.2);
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_#1f268712];
+  }
+
+  .premium-card {
+    @apply bg-white border border-slate-100 shadow-[0_10px_40px_-15px_#0000000d] hover:shadow-[0_20px_60px_-15px_#c5a0591f] transition-all duration-500 rounded-3xl;
+  }
+
+  .gold-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#C5A059] via-[#E2C68E] to-[#C5A059] bg-[length:200%_auto] animate-gradient;
+  }
+
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#D80000] text-white rounded-full font-bold shadow-[0_10px_25px_-5px_#d800004d] hover:shadow-[0_15px_30px_-5px_#d8000066] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-8 py-4 border-2 border-slate-200 text-slate-700 rounded-full font-bold hover:bg-slate-50 hover:border-[#C5A059]/30 transition-all duration-300;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-gradient {
+    animation: gradient 3s linear infinite;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% center;
+    }
+
+    100% {
+      background-position: 200% center;
+    }
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+    size: auto;
+  }
+
+  body,
+  html {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-report,
+  #printable-report * {
+    visibility: visible;
+  }
+
+  #printable-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+    z-index: 9999;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

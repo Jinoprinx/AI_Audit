@@ -234,11 +234,11 @@ export default function AIAuditTool() {
         <div className="space-y-8 animate-slideUp">
             <SectionHeader
                 title="Audit Initialization"
-                description="Start by defining the client and the scope of this audit. This ensures all ROI calculations are contextually accurate for the specific business."
+                description="Start by defining the business and the scope of this audit. This ensures all ROI calculations are contextually accurate for the specific business."
                 icon={ClipboardCheck}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputGroup label="Client / Company Name">
+                <InputGroup label="Business Name">
                     <TextInput
                         value={formData.clientName}
                         onChange={(e: any) => handleInputChange('clientName', e.target.value)}

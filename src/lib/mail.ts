@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.BREVO_SMTP_LOGIN || '', // Your Brevo login (email)
-    pass: env.BREVO_API_KEY, // Using API key as SMTP password
+    user: env.BREVO_SMTP_LOGIN, // Validated from env.ts
+    pass: env.BREVO_API_KEY,
   },
 });
 
@@ -18,7 +18,7 @@ export const sendAuditReportEmail = async (email: string, reportData: any) => {
   }
 
   const mailOptions = {
-    from: '"AI Audit Tool" <noreply@aiaudit.com>',
+    from: '"AI Audit Tool" <jino4rex@gmail.com>',
     to: email,
     subject: "Your AI Readiness Audit Report",
     html: `
@@ -52,7 +52,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
   const verificationLink = `${process.env.NEXTAUTH_URL}/auth/verify?token=${token}`;
 
   const mailOptions = {
-    from: '"AI Audit Tool" <noreply@aiaudit.com>',
+    from: '"AI Audit Tool" <jino4rex@gmail.com>',
     to: email,
     subject: "Verify your AI Audit Account",
     html: `
@@ -85,7 +85,7 @@ export const sendNewsletterVerification = async (email: string) => {
   if (!env.BREVO_API_KEY) return;
 
   const mailOptions = {
-    from: '"AI Audit Tool" <noreply@aiaudit.com>',
+    from: '"AI Audit Tool" <jino4rex@gmail.com>',
     to: email,
     subject: "Confirm your AI Insights Subscription",
     html: `

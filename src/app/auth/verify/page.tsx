@@ -13,7 +13,12 @@ function VerifyContent() {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('');
 
+    const processedRef = React.useRef(false);
+
     useEffect(() => {
+        if (processedRef.current) return;
+        processedRef.current = true; // Mark as processed immediately
+
         if (!token) {
             setStatus('error');
             setMessage('Missing verification token.');

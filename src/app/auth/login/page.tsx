@@ -2,16 +2,41 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, Mail, Zap } from 'lucide-react';
+import { ArrowLeft, Lock, Mail, Zap, Loader2 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get('callbackUrl') || '/audit';
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simulate login
-        window.location.href = '/audit';
+        setLoading(true);
+        setError('');
+
+        try {
+            const res = await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+            });
+
+            if (res?.error) {
+                setError('Invalid email or password');
+                setLoading(false);
+            } else {
+                router.push(callbackUrl);
+            }
+        } catch (err) {
+            setError('An error occurred. Please try again.');
+            setLoading(false);
+        }
     };
 
     return (
@@ -38,6 +63,12 @@ export default function LoginPage() {
 
                 <div className="premium-card p-8 sm:p-10">
                     <form className="space-y-6" onSubmit={handleSubmit}>
+                        {error && (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100 flex items-center gap-2">
+                                <Zap size={16} className="fill-current" />
+                                {error}
+                            </div>
+                        )}
                         <div className="space-y-2 group">
                             <label htmlFor="email" className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] group-focus-within:text-[#C5A059] transition-colors">Email address</label>
                             <div className="relative">
@@ -75,8 +106,13 @@ export default function LoginPage() {
                         </div>
 
                         <div className="pt-2">
-                            <button type="submit" className="btn-primary w-full h-14 text-lg shadow-2xl">
-                                Sign in to Dashboard
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="btn-primary w-full h-14 text-lg shadow-2xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {loading && <Loader2 className="animate-spin" size={20} />}
+                                {loading ? 'Signing in...' : 'Sign in to Dashboard'}
                             </button>
                         </div>
                     </form>

@@ -9,6 +9,7 @@ export async function POST(req: Request) {
         const { name, email, password } = await req.json();
 
         if (!name || !email || !password) {
+            console.warn("Signup failed: Missing fields", { name, email: !!email, password: !!password });
             return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         }
 
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
         });
 
         if (existingUser) {
+            console.warn("Signup failed: Email already in use", email);
             return NextResponse.json({ error: "Email already in use" }, { status: 400 });
         }
 

@@ -49,7 +49,8 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     return;
   }
 
-  const verificationLink = `${process.env.NEXTAUTH_URL}/auth/verify?token=${token}`;
+  const baseUrl = env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+  const verificationLink = `${baseUrl}/auth/verify?token=${token}`;
 
   const mailOptions = {
     from: '"AI Audit Tool" <jino4rex@gmail.com>',

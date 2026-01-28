@@ -3,6 +3,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { env } from "./env";
 
 export const authOptions: NextAuthOptions = {
     debug: true, // Enable debug logs to investigate 500 error
@@ -25,29 +26,41 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log("[Auth] Authorizing user:", credentials?.email);
                 if (!credentials?.email || !credentials?.password) {
+                    console.warn("[Auth] Missing credentials");
                     throw new Error("Invalid credentials");
                 }
 
-                const user: User | null = await prisma.user.findUnique({
-                    where: { email: credentials.email },
-                });
+                try {
+                    const user: User | null = await prisma.user.findUnique({
+                        where: { email: credentials.email },
+                    });
 
-                if (!user || !user.passwordHash) {
-                    throw new Error("User not found");
+                    if (!user || !user.passwordHash) {
+                        console.warn("[Auth] User not found or no hash:", credentials.email);
+                        throw new Error("User not found");
+                    }
+
+                    console.log("[Auth] Comparing passwords...");
+                    const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+
+                    if (!isValid) {
+                        console.warn("[Auth] Invalid password for:", credentials.email);
+                        throw new Error("Invalid password");
+                    }
+
+                    console.log("[Auth] Login successful:", credentials.email);
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        emailVerified: user.emailVerified
+                    } as any;
+                } catch (error) {
+                    console.error("[Auth] Authorize error:", error);
+                    throw error;
                 }
-                const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-
-                if (!isValid) {
-                    throw new Error("Invalid password");
-                }
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    emailVerified: user.emailVerified
-                };
             }
         })
     ],
@@ -86,5 +99,5 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: "/auth/login",
     },
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: env.NEXTAUTH_SECRET,
 };

@@ -5,6 +5,8 @@ const envSchema = z.object({
     DIRECT_URL: z.string().url(),
     BREVO_API_KEY: z.string().min(1),
     BREVO_SMTP_LOGIN: z.string().email(), // Brevo SMTP Login Requirement
+    NEXTAUTH_SECRET: z.string().min(1),
+    NEXTAUTH_URL: z.string().url().optional(), // Can be optional in Vercel as it is automatically detected, but better to validate if provided
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 

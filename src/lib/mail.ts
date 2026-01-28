@@ -3,12 +3,14 @@ import { env } from './env';
 
 const transporter = nodemailer.createTransport({
   host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
   auth: {
     user: env.BREVO_SMTP_LOGIN, // Validated from env.ts
     pass: env.BREVO_API_KEY,
   },
+  connectionTimeout: 10000, // 10 seconds timeout
+  greetingTimeout: 10000,
 });
 
 export const sendAuditReportEmail = async (email: string, reportData: any) => {

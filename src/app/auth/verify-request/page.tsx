@@ -25,7 +25,7 @@ export default function VerifyRequestPage() {
                     <div className="space-y-6">
                         <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
                             <div className="min-w-5 pt-1 text-[#C5A059]">1.</div>
-                            <p className="text-sm text-slate-600">Locate the email from <strong>noreply@aiaudit.com</strong></p>
+                            <p className="text-sm text-slate-600">Locate the email from <strong>jino4rex@gmail.com</strong></p>
                         </div>
                         <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
                             <div className="min-w-5 pt-1 text-[#C5A059]">2.</div>

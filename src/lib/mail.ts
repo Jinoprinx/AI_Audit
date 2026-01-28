@@ -1,29 +1,59 @@
-import nodemailer from 'nodemailer';
 import { env } from './env';
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: env.BREVO_SMTP_LOGIN, // Validated from env.ts
-    pass: env.BREVO_API_KEY,
-  },
-  connectionTimeout: 10000, // 10 seconds timeout
-  greetingTimeout: 10000,
-});
+interface SendEmailParams {
+  to: string;
+  subject: string;
+  html: string;
+}
 
-export const sendAuditReportEmail = async (email: string, reportData: any) => {
+const sendEmailViaAPI = async ({ to, subject, html }: SendEmailParams) => {
   if (!env.BREVO_API_KEY) {
     console.warn("BREVO_API_KEY not found. Skipping email.");
     return;
   }
 
-  const mailOptions = {
-    from: '"AI Audit Tool" <jino4rex@gmail.com>',
-    to: email,
-    subject: "Your AI Readiness Audit Report",
-    html: `
+  // Debug logging (masked)
+  console.log(`[Mail] Using Sender: jino4rex@gmail.com`);
+  console.log(`[Mail] BREVO_SMTP_LOGIN present: ${!!env.BREVO_SMTP_LOGIN}`);
+  console.log(`[Mail] BREVO_API_KEY length: ${env.BREVO_API_KEY.length}`);
+  console.log(`[Mail] BREVO_API_KEY starts with: ${env.BREVO_API_KEY.substring(0, 4)}...`);
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "AI Audit Tool",
+          email: "jino4rex@gmail.com",
+        },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Brevo API Error:", JSON.stringify(errorData, null, 2));
+      throw new Error(`Failed to send email: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Email sent successfully via Brevo API:', data.messageId || 'Success');
+    return data;
+  } catch (error) {
+    console.error("Error sending email via Brevo API:", error);
+    throw error;
+  }
+};
+
+export const sendAuditReportEmail = async (email: string, reportData: any) => {
+  const html = `
       <html>
         <body style="font-family: sans-serif; padding: 20px; color: #333;">
           <h1 style="color: #D80000;">AI Readiness Audit Report for ${reportData.clientName}</h1>
@@ -32,33 +62,20 @@ export const sendAuditReportEmail = async (email: string, reportData: any) => {
           <p>Readiness Score: ${reportData.readinessScore}%</p>
         </body>
       </html>
-    `,
-  };
+    `;
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Audit report email sent:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error("Error sending audit report email:", error);
-    throw error;
-  }
+  return sendEmailViaAPI({
+    to: email,
+    subject: "Your AI Readiness Audit Report",
+    html,
+  });
 };
 
 export const sendVerificationEmail = async (email: string, token: string) => {
-  if (!env.BREVO_API_KEY) {
-    console.warn("BREVO_API_KEY not found. Skipping verification email.");
-    return;
-  }
-
   const baseUrl = env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
   const verificationLink = `${baseUrl}/auth/verify?token=${token}`;
 
-  const mailOptions = {
-    from: '"AI Audit Tool" <jino4rex@gmail.com>',
-    to: email,
-    subject: "Verify your AI Audit Account",
-    html: `
+  const html = `
       <html>
         <body style="font-family: sans-serif; padding: 20px; color: #333; background-color: #f9f9f7;">
           <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; border: 1px solid #eee;">
@@ -71,27 +88,17 @@ export const sendVerificationEmail = async (email: string, token: string) => {
           </div>
         </body>
       </html>
-    `,
-  };
+    `;
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Verification email sent:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error("Error sending verification email:", error);
-    throw error;
-  }
+  return sendEmailViaAPI({
+    to: email,
+    subject: "Verify your AI Audit Account",
+    html,
+  });
 };
 
 export const sendNewsletterVerification = async (email: string) => {
-  if (!env.BREVO_API_KEY) return;
-
-  const mailOptions = {
-    from: '"AI Audit Tool" <jino4rex@gmail.com>',
-    to: email,
-    subject: "Confirm your AI Insights Subscription",
-    html: `
+  const html = `
       <html>
         <body style="font-family: sans-serif; padding: 20px; color: #333; background-color: #f9f9f7;">
           <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; border: 1px solid #eee;">
@@ -103,11 +110,14 @@ export const sendNewsletterVerification = async (email: string) => {
           </div>
         </body>
       </html>
-    `,
-  };
+    `;
 
   try {
-    await transporter.sendMail(mailOptions);
+    await sendEmailViaAPI({
+      to: email,
+      subject: "Confirm your AI Insights Subscription",
+      html,
+    });
     console.log('Newsletter verification email sent');
   } catch (error) {
     console.error("Error sending newsletter confirmation:", error);

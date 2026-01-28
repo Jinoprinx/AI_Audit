@@ -18,8 +18,11 @@ import {
     DollarSign
 } from 'lucide-react';
 import Link from 'next/link';
+import { useSession, signOut } from "next-auth/react";
 
 export default function LandingPage() {
+    const { data: session } = useSession();
+
     return (
         <div className="min-h-screen bg-[#F9F9F7] selection:bg-[#C5A059]/30">
             {/* --- Navigation --- */}
@@ -34,7 +37,17 @@ export default function LandingPage() {
                     <div className="hidden md:flex items-center gap-8">
                         <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">How it works</Link>
                         <Link href="#roi" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">ROI Calculator</Link>
-                        <Link href="/auth/login" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">Sign In</Link>
+                        <Link href="#roi" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">ROI Calculator</Link>
+                        {session ? (
+                            <button
+                                onClick={() => signOut()}
+                                className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors"
+                            >
+                                Sign Out
+                            </button>
+                        ) : (
+                            <Link href="/auth/login" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">Sign In</Link>
+                        )}
                         <Link href="/audit" className="btn-primary py-2.5 px-6 text-sm">
                             Run Free Audit
                         </Link>

@@ -78,7 +78,7 @@ export default function SignupPage() {
                 </div>
 
                 <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-[#1A1A1A] tracking-tight mb-2">Start Your <span className="gold-gradient-text italic">Audit.</span></h2>
-                <p className="text-slate-500 font-light mb-10">Create your account to unlock professional AI reporting and ROI insights.</p>
+                <p className="text-slate-500 font-light mb-10">Create your account to unlock professional business AI reporting and what ROI insights AI can provide your business.</p>
 
                 <div className="premium-card p-8 sm:p-10">
                     {error && (

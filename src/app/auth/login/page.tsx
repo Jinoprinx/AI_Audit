@@ -59,7 +59,7 @@ export default function LoginPage() {
                 </div>
 
                 <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-[#1A1A1A] tracking-tight mb-2">Welcome <span className="gold-gradient-text italic">Back.</span></h2>
-                <p className="text-slate-500 font-light mb-10">Enter your credentials to access your AI-Audit dashboard.</p>
+                <p className="text-slate-500 font-light mb-10">Enter your credentials to access your business AI-Audit dashboard.</p>
 
                 <div className="premium-card p-8 sm:p-10">
                     <form className="space-y-6" onSubmit={handleSubmit}>

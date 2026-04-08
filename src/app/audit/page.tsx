@@ -312,7 +312,7 @@ export default function AIAuditTool() {
                     </select>
                 </InputGroup>
                 <div className="md:col-span-2">
-                    <InputGroup label="Biggest Time/Money Wastes" subLabel="What are the 'resource leakages' or activities that waste the most time or money?">
+                    <InputGroup label="Biggest Time/Money Wastes" subLabel="What are the &apos;resource leakages&apos; or activities that waste the most time or money?">
                         <TextArea
                             value={formData.painPoints}
                             onChange={(e: any) => handleInputChange('painPoints', e.target.value)}
@@ -390,7 +390,7 @@ export default function AIAuditTool() {
                     </select>
                 </InputGroup>
                 <div className="md:col-span-2">
-                    <InputGroup label="Current Roadblocks" subLabel="What's stopping you from reaching that next level?">
+                    <InputGroup label="Current Roadblocks" subLabel="What&apos;s stopping you from reaching that next level?">
                         <TextArea
                             value={formData.roadblocks}
                             onChange={(e: any) => handleInputChange('roadblocks', e.target.value)}
@@ -512,7 +512,7 @@ export default function AIAuditTool() {
                     <div className="premium-card p-10 bg-[#F9F9F7] border-slate-200 mb-12">
                         <h2 className="text-2xl font-bold text-slate-900 mb-4 font-playfair">Executive Summary</h2>
                         <p className="text-lg text-slate-600 font-light leading-relaxed italic border-l-4 border-[#C5A059] pl-6 transition-all">
-                            "{report.executiveSummary}"
+                            &quot;{report.executiveSummary}&quot;
                         </p>
                     </div>
 

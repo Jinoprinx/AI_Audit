@@ -197,7 +197,7 @@ export default function LandingPage() {
                             {[
                                 { quote: "We saved $8k in our first month after implementing just three of the recommended AI workflows.", author: "James Chen, Founder of Apex", rating: 5 },
                                 { quote: "The audit was eye-opening. We realized our sales team was wasting 20 hours a week on manual data entry.", author: "Sarah Jenkins, Ops Director", rating: 5 },
-                                { quote: "Most professional AI tool I've used. The printable reports helped us get board approval for our AI budget.", author: "Michael Roe, CTO", rating: 5 }
+                                { quote: "Most professional AI tool I&apos;ve used. The printable reports helped us get board approval for our AI budget.", author: "Michael Roe, CTO", rating: 5 }
                             ].map((test, i) => (
                                 <div key={i} className="premium-card p-8 bg-slate-50 border-0">
                                     <div className="flex gap-1 mb-6 text-[#C5A059]">

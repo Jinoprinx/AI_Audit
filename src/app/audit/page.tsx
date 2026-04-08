@@ -87,51 +87,42 @@ export default function AIAuditTool() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [step, setStep] = useState(1);
-    const totalSteps = 7;
+    const totalSteps = 5;
 
     // --- State Management (ALL hooks BEFORE any conditional returns) ---
     const [formData, setFormData] = useState({
-        // 1. Client Info
-        clientName: '',
-        auditorName: '',
-        date: new Date().toISOString().split('T')[0],
-
-        // 2. Strategy
-        kpis: '',
-        painPoints: '',
-        bottlenecks: '',
-        riskTolerance: 'Moderate', // Low, Moderate, High
-
-        // 3. Infrastructure
-        dataSources: {
-            crm: false,
-            erp: false,
-            pm: false,
-            comms: false,
-            storage: false,
+        // 1. Business Profile
+        businessName: '',
+        businessType: '', // Salon, Restaurant, Agency, School, etc.
+        businessModel: '', // How do they make money?
+        
+        // 2. Operations
+        dailyActivities: '', // What does a typical day look like?
+        customerProcess: '', // How do customers find and interact with you?
+        
+        // 3. Current Status
+        revenueRange: '3-figures', // 3, 4, 5, 6, 7-9 figures
+        employeeCount: '1-5',
+        painPoints: '', // Where is the money/time leaking?
+        
+        // 4. Tools & Tech
+        toolsUsed: {
+            socialMedia: false,
+            bookingApp: false,
+            accountingSoftware: false,
+            messagingApps: false,
+            paperRecords: false,
         },
-        systems: [
-            { name: '', api: false, webhooks: false, cleanliness: 5 }
-        ],
+        otherTools: '',
 
-        // 4. Workflows
-        salesNotes: '',
-        supportNotes: '',
-        opsNotes: '',
-
-        // 5. Opportunities
-        opportunities: [
-            { title: 'Example: Invoice Processing', dept: 'Finance', hours: 20, impact: 4, effort: 4 }
-        ],
-
-        // 6. Risk
-        hasPII: false,
-        needsHumanLoop: false,
-        vendorLockIn: false,
-
-        // 7. ROI
-        hourlyRate: 50,
-        employeesCount: 1,
+        // 5. Growth & Goals
+        growthTarget: '4-figures', // Next tier
+        roadblocks: '', // What's stopping you?
+        
+        // Internal settings
+        date: new Date().toISOString().split('T')[0],
+        isAnalyzing: false,
+        reportData: null as any
     });
 
     // Auth Guard
@@ -188,76 +179,70 @@ export default function AIAuditTool() {
         }));
     };
 
-    const addSystem = () => {
-        setFormData(prev => ({
-            ...prev,
-            systems: [...prev.systems, { name: '', api: false, webhooks: false, cleanliness: 5 }]
-        }));
+    const generateReport = async () => {
+        setStep(6);
+        setFormData(prev => ({ ...prev, isAnalyzing: true }));
+        try {
+            const response = await fetch('/api/audit/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+            const data = await response.json();
+            setFormData(prev => ({ 
+                ...prev, 
+                reportData: data,
+                isAnalyzing: false 
+            }));
+        } catch (error) {
+            console.error('Failed to generate report:', error);
+            setFormData(prev => ({ ...prev, isAnalyzing: false }));
+            alert('Something went wrong while analyzing your business. Please try again.');
+            setStep(5);
+        }
     };
 
-    const updateSystem = (index: number, field: string, value: any) => {
-        const newSystems = [...formData.systems];
-        (newSystems[index] as any)[field] = value;
-        setFormData(prev => ({ ...prev, systems: newSystems }));
-    };
-
-    const removeSystem = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            systems: prev.systems.filter((_, i) => i !== index)
-        }));
-    };
-
-    const addOpportunity = () => {
-        setFormData(prev => ({
-            ...prev,
-            opportunities: [...prev.opportunities, { title: '', dept: '', hours: 0, impact: 3, effort: 3 }]
-        }));
-    };
-
-    const updateOpportunity = (index: number, field: string, value: any) => {
-        const newOps = [...formData.opportunities];
-        (newOps[index] as any)[field] = value;
-        setFormData(prev => ({ ...prev, opportunities: newOps }));
-    };
-
-    const removeOpportunity = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            opportunities: prev.opportunities.filter((_, i) => i !== index)
-        }));
-    };
+    // Removed legacy technical audit functions
 
     // --- Step Content Renders ---
 
-    const renderStep1_Info = () => (
+    const renderStep1_Profile = () => (
         <div className="space-y-8 animate-slideUp">
             <SectionHeader
-                title="Audit Initialization"
-                description="Start by defining the business and the scope of this audit. This ensures all ROI calculations are contextually accurate for the specific business."
-                icon={ClipboardCheck}
+                title="Business Profile"
+                description="Tell us about your business so we can tailor the audit to your specific industry and model."
+                icon={Users}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InputGroup label="Business Name">
                     <TextInput
-                        value={formData.clientName}
-                        onChange={(e: any) => handleInputChange('clientName', e.target.value)}
-                        placeholder="e.g. Acme Corp"
+                        value={formData.businessName}
+                        onChange={(e: any) => handleInputChange('businessName', e.target.value)}
+                        placeholder="e.g. Sunny Hair Salon"
                     />
                 </InputGroup>
-                <InputGroup label="Auditor Name">
-                    <TextInput
-                        value={formData.auditorName}
-                        onChange={(e: any) => handleInputChange('auditorName', e.target.value)}
-                        placeholder="Your Name or Agency"
-                    />
+                <InputGroup label="Business Type">
+                    <select
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-[#C5A059]/10 focus:border-[#C5A059] focus:bg-white transition-all duration-300 text-slate-800 font-sans outline-none shadow-sm"
+                        value={formData.businessType}
+                        onChange={(e: any) => handleInputChange('businessType', e.target.value)}
+                    >
+                        <option value="">Select industry...</option>
+                        <option value="Hair Salon / Barber Shop">Hair Salon / Barber Shop</option>
+                        <option value="Restaurant / Cafe">Restaurant / Cafe</option>
+                        <option value="AI Agency / Tech Service">AI Agency / Tech Service</option>
+                        <option value="School / Church">School / Church</option>
+                        <option value="Real Estate Agency">Real Estate Agency</option>
+                        <option value="Retail Store">Retail Store</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </InputGroup>
                 <div className="md:col-span-2">
-                    <InputGroup label="Audit Date">
-                        <TextInput
-                            type="date"
-                            value={formData.date}
-                            onChange={(e: any) => handleInputChange('date', e.target.value)}
+                    <InputGroup label="How do you make money?" subLabel="Briefly describe your products or services and how customers pay you.">
+                        <TextArea
+                            value={formData.businessModel}
+                            onChange={(e: any) => handleInputChange('businessModel', e.target.value)}
+                            placeholder="e.g. We sell hair products and charge for haircuts and styling services..."
                         />
                     </InputGroup>
                 </div>
@@ -265,347 +250,166 @@ export default function AIAuditTool() {
         </div>
     );
 
-    const renderStep2_Strategy = () => (
+    const renderStep2_Operations = () => (
         <div className="space-y-8 animate-slideUp">
             <SectionHeader
-                title="Strategic Alignment"
-                description="Identify business goals to ensure AI efforts drive real ROI. We focus on areas that make more money, save more money, and save more time."
+                title="Operations & Activities"
+                description="Describe how your business runs day-to-day. This helps us find bottlenecks and time-wasters."
                 icon={TrendingUp}
             />
             <div className="space-y-8">
-                <InputGroup label="Top 3 KPIs" subLabel="What metrics are they trying to move this quarter? (e.g. CAC, LTV, Monthly Revenue)">
+                <InputGroup label="Daily Activities" subLabel="What does a typical busy day look like for you and your team?">
                     <TextArea
-                        value={formData.kpis}
-                        onChange={(e: any) => handleInputChange('kpis', e.target.value)}
-                        placeholder="1. Reduce customer support response time by 50%..."
+                        value={formData.dailyActivities}
+                        onChange={(e: any) => handleInputChange('dailyActivities', e.target.value)}
+                        placeholder="e.g. Opening the shop, attending to walk-in customers, managing bookings on the phone..."
                     />
                 </InputGroup>
-                <InputGroup label="Primary Pain Points" subLabel="What are the biggest drains on resources? What keeps the business owner up at night?">
+                <InputGroup label="Customer Journey" subLabel="How do customers find you and what happens when they want your service/product?">
                     <TextArea
-                        value={formData.painPoints}
-                        onChange={(e: any) => handleInputChange('painPoints', e.target.value)}
-                        placeholder="Manual data entry between CRM and Accounting is causing 10% error rates..."
+                        value={formData.customerProcess}
+                        onChange={(e: any) => handleInputChange('customerProcess', e.target.value)}
+                        placeholder="e.g. They find us on Instagram, send a DM or call to book, then show up at the shop..."
                     />
-                </InputGroup>
-                <InputGroup label="Bottlenecks" subLabel="Where exactly does the workflow stall?">
-                    <TextArea
-                        value={formData.bottlenecks}
-                        onChange={(e: any) => handleInputChange('bottlenecks', e.target.value)}
-                        placeholder="Waiting for manager approval on invoices takes 3 days on average..."
-                    />
-                </InputGroup>
-                <InputGroup label="AI Risk Tolerance">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {['Low', 'Moderate', 'High'].map((level) => (
-                            <button
-                                key={level}
-                                onClick={() => handleInputChange('riskTolerance', level)}
-                                className={`px-6 py-4 rounded-2xl border-2 transition-all duration-300 text-left ${formData.riskTolerance === level
-                                    ? 'border-[#C5A059] bg-[#C5A059]/5 text-[#C5A059] shadow-inner'
-                                    : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                    }`}
-                            >
-                                <div className="font-bold mb-1">{level}</div>
-                                <div className="text-xs opacity-70">
-                                    {level === 'Low' && 'Proven enterprise solutions.'}
-                                    {level === 'Moderate' && 'Balanced innovation.'}
-                                    {level === 'High' && 'Cutting-edge AI tech.'}
-                                </div>
-                            </button>
-                        ))}
-                    </div>
                 </InputGroup>
             </div>
         </div>
     );
 
-    const renderStep3_Infrastructure = () => (
+    const renderStep3_Status = () => (
         <div className="space-y-8 animate-slideUp">
             <SectionHeader
-                title="Data Infrastructure"
-                description="Assess technical feasibility. AI needs accessible, clean data to be effective and secure."
+                title="Current Status"
+                description="Help us understand the scale of your business and where the leaks are."
                 icon={Database}
             />
 
-            <div className="premium-card p-8 bg-slate-50/50 border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800 mb-6 font-playfair flex items-center gap-2">
-                    <Zap className="text-[#D80000] w-5 h-5" />
-                    Data Sources Checklist
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[
-                        { key: 'crm', label: 'CRM (Salesforce, HubSpot)', icon: Users },
-                        { key: 'erp', label: 'Finance (Xero, QuickBooks)', icon: DollarSign },
-                        { key: 'pm', label: 'Projects (Jira, ClickUp)', icon: Clock },
-                        { key: 'comms', label: 'Comms (Slack, Teams)', icon: Mail },
-                        { key: 'storage', label: 'Files (Drive, Dropbox)', icon: Database },
-                    ].map((item) => (
-                        <label key={item.key} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${(formData.dataSources as any)[item.key]
-                            ? 'bg-white border-[#C5A059] shadow-sm'
-                            : 'bg-transparent border-slate-200 opacity-60 hover:opacity-100'
-                            }`}>
-                            <input
-                                type="checkbox"
-                                checked={(formData.dataSources as any)[item.key]}
-                                onChange={(e) => handleNestedChange('dataSources', item.key, e.target.checked)}
-                                className="w-5 h-5 text-[#C5A059] border-slate-300 rounded focus:ring-[#C5A059]"
-                            />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-800">{item.label}</span>
-                            </div>
-                        </label>
-                    ))}
-                </div>
-            </div>
-
-            <div>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-slate-800 font-playfair">System Connectivity Audit</h3>
-                    <button
-                        onClick={addSystem}
-                        className="flex items-center gap-2 py-2 px-4 bg-white border border-slate-200 text-slate-600 rounded-xl hover:border-[#C5A059] hover:text-[#C5A059] transition-all font-bold text-sm shadow-sm"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <InputGroup label="Current Monthly Revenue">
+                    <select
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-[#C5A059]/10 focus:border-[#C5A059] focus:bg-white transition-all duration-300 text-slate-800 font-sans outline-none shadow-sm"
+                        value={formData.revenueRange}
+                        onChange={(e: any) => handleInputChange('revenueRange', e.target.value)}
                     >
-                        <Plus size={18} /> Add System
-                    </button>
-                </div>
-                <div className="space-y-4">
-                    {formData.systems.map((sys, idx) => (
-                        <div key={idx} className="group relative flex flex-col md:flex-row gap-6 items-start md:items-center p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md transition-all">
-                            <div className="flex-1 w-full space-y-2">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">System Name</label>
-                                <input
-                                    type="text"
-                                    value={sys.name}
-                                    onChange={(e) => updateSystem(idx, 'name', e.target.value)}
-                                    placeholder="e.g. Legacy ERP"
-                                    className="w-full bg-transparent border-b-2 border-slate-100 focus:border-[#C5A059] py-1 transition-all outline-none font-sans text-slate-800"
-                                />
-                            </div>
-                            <div className="flex items-center gap-8">
-                                <label className="flex items-center gap-3 cursor-pointer group/check">
-                                    <div className={`w-6 h-6 border-2 rounded flex items-center justify-center transition-all ${sys.api ? 'border-[#C5A059] bg-[#C5A059] text-white' : 'border-slate-200'}`}>
-                                        {sys.api && <CheckCircle size={14} />}
-                                    </div>
-                                    <input
-                                        type="checkbox"
-                                        checked={sys.api}
-                                        className="hidden"
-                                        onChange={(e) => updateSystem(idx, 'api', e.target.checked)}
-                                    />
-                                    <span className="text-sm font-bold text-slate-600">API</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer group/check">
-                                    <div className={`w-6 h-6 border-2 rounded flex items-center justify-center transition-all ${sys.webhooks ? 'border-[#C5A059] bg-[#C5A059] text-white' : 'border-slate-200'}`}>
-                                        {sys.webhooks && <CheckCircle size={14} />}
-                                    </div>
-                                    <input
-                                        type="checkbox"
-                                        checked={sys.webhooks}
-                                        className="hidden"
-                                        onChange={(e) => updateSystem(idx, 'webhooks', e.target.checked)}
-                                    />
-                                    <span className="text-sm font-bold text-slate-600">Webhooks</span>
-                                </label>
-                            </div>
-                            <div className="w-full md:w-32 space-y-2">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Data Cleanliness</label>
-                                <div className="flex items-center gap-3">
-                                    <input
-                                        type="range"
-                                        min="1" max="10"
-                                        value={sys.cleanliness}
-                                        onChange={(e) => updateSystem(idx, 'cleanliness', parseInt(e.target.value))}
-                                        className="w-full h-1.5 bg-slate-100 rounded-full appearance-none accent-[#C5A059] cursor-pointer"
-                                    />
-                                    <span className="text-sm font-black text-[#C5A059] min-w-[1.5rem]">{sys.cleanliness}</span>
-                                </div>
-                            </div>
-                            <button onClick={() => removeSystem(idx)} className="absolute -top-3 -right-3 md:relative md:top-0 md:right-0 p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    ))}
+                        <option value="3-figures">3-figures (e.g. $100 - $999)</option>
+                        <option value="4-figures">4-figures (e.g. $1,000 - $9,999)</option>
+                        <option value="5-figures">5-figures (e.g. $10,000 - $99,999)</option>
+                        <option value="6-figures">6-figures (e.g. $100,000+)</option>
+                        <option value="7-9 figures">7-9 figures ($1M+)</option>
+                    </select>
+                </InputGroup>
+                <InputGroup label="Team Size">
+                    <select
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-[#C5A059]/10 focus:border-[#C5A059] focus:bg-white transition-all duration-300 text-slate-800 font-sans outline-none shadow-sm"
+                        value={formData.employeeCount}
+                        onChange={(e: any) => handleInputChange('employeeCount', e.target.value)}
+                    >
+                        <option value="1 (Solopreneur)">Just me</option>
+                        <option value="2-5">2-5 people</option>
+                        <option value="6-15">6-15 people</option>
+                        <option value="16-50">16-50 people</option>
+                        <option value="50+">50+ people</option>
+                    </select>
+                </InputGroup>
+                <div className="md:col-span-2">
+                    <InputGroup label="Biggest Time/Money Wastes" subLabel="What are the 'resource leakages' or activities that waste the most time or money?">
+                        <TextArea
+                            value={formData.painPoints}
+                            onChange={(e: any) => handleInputChange('painPoints', e.target.value)}
+                            placeholder="e.g. Manually sending reminders to customers, dealing with cancellations, wastage of raw materials..."
+                        />
+                    </InputGroup>
                 </div>
             </div>
         </div>
     );
 
-    const renderStep4_Workflows = () => (
+    const renderStep4_Tools = () => (
         <div className="space-y-8 animate-slideUp">
             <SectionHeader
-                title="Workflow Analysis"
-                description="Deep dive into departmental processes to find high-impact automation triggers. Look for the 'Three Ms': Manual, Monotonous, and Messy."
+                title="Tools & Technology"
+                description="What tools do you currently use to run your business?"
                 icon={FileText}
             />
 
-            <div className="space-y-10">
-                <div className="premium-card p-8 bg-white border-slate-100 hover:border-[#C5A059]/30 transition-all">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="w-1.5 h-10 bg-blue-500 rounded-full"></div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800 font-playfair">Sales & Marketing</h3>
-                            <p className="text-sm text-slate-400 font-sans italic">Hacks: Manual data entry, copy-pasting, generic lead follow-ups.</p>
-                        </div>
-                    </div>
-                    <InputGroup label="Process Map: Interest to Close" subLabel="Describe the journey steps. Where do people spend the most time?">
-                        <TextArea
-                            value={formData.salesNotes}
-                            onChange={(e: any) => handleInputChange('salesNotes', e.target.value)}
-                            placeholder="e.g. 1. Lead comes in via Website Form. 2. Rep checks email every 2 hours. 3. Rep manually adds lead to CRM..."
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                    { key: 'socialMedia', label: 'Social Media (Instagram/FB)', icon: Globe },
+                    { key: 'bookingApp', label: 'Booking/Scheduling App', icon: Clock },
+                    { key: 'accountingSoftware', label: 'Accounting (Quickbooks/Excel)', icon: DollarSign },
+                    { key: 'messagingApps', label: 'Messaging (WhatsApp/DMs)', icon: Mail },
+                    { key: 'paperRecords', label: 'Paper Records / Manual Filing', icon: FileText },
+                ].map((item) => (
+                    <label key={item.key} className={`flex items-center gap-4 p-5 rounded-3xl border transition-all cursor-pointer ${(formData.toolsUsed as any)[item.key]
+                        ? 'bg-white border-[#C5A059] shadow-md'
+                        : 'bg-slate-50 border-slate-100 opacity-60 hover:opacity-100'
+                        }`}>
+                        <input
+                            type="checkbox"
+                            checked={(formData.toolsUsed as any)[item.key]}
+                            onChange={(e) => handleNestedChange('toolsUsed', item.key, e.target.checked)}
+                            className="w-6 h-6 text-[#C5A059] border-slate-300 rounded-lg focus:ring-[#C5A059]"
                         />
-                    </InputGroup>
-                </div>
-
-                <div className="premium-card p-8 bg-white border-slate-100 hover:border-[#C5A059]/30 transition-all">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="w-1.5 h-10 bg-emerald-500 rounded-full"></div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800 font-playfair">Customer Support</h3>
-                            <p className="text-sm text-slate-400 font-sans italic">Hacks: Repetitive FAQs, manual ticket routing, sentiment analysis.</p>
+                        <div className="flex items-center gap-3">
+                            <item.icon size={20} className={(formData.toolsUsed as any)[item.key] ? 'text-[#C5A059]' : 'text-slate-400'} />
+                            <span className="font-bold text-slate-800">{item.label}</span>
                         </div>
-                    </div>
-                    <InputGroup label="Top Inquiries & Bottlenecks" subLabel="What are the most common questions? What takes longest to resolve?">
-                        <TextArea
-                            value={formData.supportNotes}
-                            onChange={(e: any) => handleInputChange('supportNotes', e.target.value)}
-                            placeholder="e.g. 60% of tickets are order status checks. Agents spend 5 mins per ticket looking up data across systems..."
-                        />
-                    </InputGroup>
-                </div>
-
-                <div className="premium-card p-8 bg-white border-slate-100 hover:border-[#C5A059]/30 transition-all">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="w-1.5 h-10 bg-purple-500 rounded-full"></div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800 font-playfair">Operations & HR</h3>
-                            <p className="text-sm text-slate-400 font-sans italic">Hacks: Scheduling, document processing, onboarding checklists.</p>
-                        </div>
-                    </div>
-                    <InputGroup label="Admin-Heavy Processes" subLabel="What back-office tasks require the most manual coordination?">
-                        <TextArea
-                            value={formData.opsNotes}
-                            onChange={(e: any) => handleInputChange('opsNotes', e.target.value)}
-                            placeholder="e.g. Invoices are received via PDF, printed, manually approved, then scanned back for filing. Takes approx 4h/week."
-                        />
-                    </InputGroup>
-                </div>
+                    </label>
+                ))}
             </div>
+
+            <InputGroup label="Other Tools" subLabel="Any other software or methods you use?">
+                <TextInput
+                    value={formData.otherTools}
+                    onChange={(e: any) => handleInputChange('otherTools', e.target.value)}
+                    placeholder="e.g. Canva for designs, specialized POS..."
+                />
+            </InputGroup>
         </div>
     );
 
-    const renderStep5_Opportunities = () => (
+    const renderStep5_Goals = () => (
         <div className="space-y-8 animate-slideUp">
             <SectionHeader
-                title="Opportunity Matrix"
-                description="Prioritize your findings. Focus on 'Quick Wins'—High Impact tasks with relatively Low Effort to implement."
+                title="Growth & Goals"
+                description="Where do you want to take your business next?"
                 icon={BarChart3}
             />
 
-            <div className="premium-card overflow-hidden bg-white border-slate-100">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-100">
-                        <thead className="bg-slate-50/50">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest font-sans">Opportunity</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest font-sans">Dept</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest font-sans text-center">Hrs Saved</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest font-sans text-center">Impact</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest font-sans text-center">Effort</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest font-sans text-center">ROI Score</th>
-                                <th className="px-6 py-4"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-100">
-                            {formData.opportunities.map((opp: any, idx) => {
-                                const score = Number(opp.impact) + Number(opp.effort);
-                                return (
-                                    <tr key={idx} className="group hover:bg-[#F9F9F7] transition-colors">
-                                        <td className="px-6 py-5">
-                                            <input
-                                                className="w-full bg-transparent border-none focus:ring-0 text-slate-800 font-bold p-0 font-sans placeholder:text-slate-300"
-                                                value={opp.title}
-                                                onChange={(e) => updateOpportunity(idx, 'title', e.target.value)}
-                                                placeholder="e.g. Automate Ticket Triage"
-                                            />
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <input
-                                                className="w-24 bg-transparent border-none focus:ring-0 text-slate-500 text-sm p-0 font-sans"
-                                                value={opp.dept}
-                                                onChange={(e) => updateOpportunity(idx, 'dept', e.target.value)}
-                                                placeholder="Dept..."
-                                            />
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex justify-center">
-                                                <input
-                                                    type="number"
-                                                    className="w-16 bg-transparent border-none focus:ring-0 text-slate-800 font-bold p-0 font-sans text-center"
-                                                    value={opp.hours}
-                                                    onChange={(e) => updateOpportunity(idx, 'hours', e.target.value)}
-                                                />
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex justify-center">
-                                                <select
-                                                    className="bg-transparent border-none focus:ring-0 text-[#C5A059] font-black p-0 font-sans cursor-pointer text-center"
-                                                    value={opp.impact}
-                                                    onChange={(e) => updateOpportunity(idx, 'impact', e.target.value)}
-                                                >
-                                                    {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex justify-center">
-                                                <select
-                                                    className="bg-transparent border-none focus:ring-0 text-[#C5A059] font-black p-0 font-sans cursor-pointer text-center"
-                                                    value={opp.effort}
-                                                    onChange={(e) => updateOpportunity(idx, 'effort', e.target.value)}
-                                                >
-                                                    {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex justify-center">
-                                                <span className={`text-xl font-black font-playfair ${score >= 8 ? 'text-emerald-500' : score >= 6 ? 'text-[#C5A059]' : 'text-slate-300'}`}>
-                                                    {score}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5 text-right">
-                                            <button onClick={() => removeOpportunity(idx)} className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <InputGroup label="Target Revenue Tier" subLabel="What is your next big milestone?">
+                    <select
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-[#C5A059]/10 focus:border-[#C5A059] focus:bg-white transition-all duration-300 text-slate-800 font-sans outline-none shadow-sm"
+                        value={formData.growthTarget}
+                        onChange={(e: any) => handleInputChange('growthTarget', e.target.value)}
+                    >
+                        <option value="4-figures">4-figures ($1,000+)</option>
+                        <option value="5-figures">5-figures ($10,000+)</option>
+                        <option value="6-figures">6-figures ($100,000+)</option>
+                        <option value="7-9 figures">7-9 figures ($1M+)</option>
+                    </select>
+                </InputGroup>
+                <div className="md:col-span-2">
+                    <InputGroup label="Current Roadblocks" subLabel="What's stopping you from reaching that next level?">
+                        <TextArea
+                            value={formData.roadblocks}
+                            onChange={(e: any) => handleInputChange('roadblocks', e.target.value)}
+                            placeholder="e.g. Not enough staff, can't reach new customers, manual processes take up all my time..."
+                        />
+                    </InputGroup>
                 </div>
             </div>
 
-            <button
-                onClick={addOpportunity}
-                className="flex items-center gap-2 py-3 px-6 bg-white border border-slate-100 text-[#D80000] rounded-2xl hover:bg-[#D80000] hover:text-white transition-all font-bold shadow-sm"
-            >
-                <Plus size={20} /> Add New Opportunity
-            </button>
-
-            <div className="bg-[#C5A059]/5 p-6 rounded-3xl border border-[#C5A059]/10 text-sm text-slate-600 font-sans flex gap-4">
-                <div className="w-10 h-10 bg-[#C5A059] text-white rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Zap size={20} />
+            <div className="premium-card p-10 bg-[#050505] text-white space-y-4 shadow-2xl shadow-red-100/20">
+                <div className="w-12 h-12 bg-[#D80000] rounded-xl flex items-center justify-center">
+                    <Zap className="fill-current" />
                 </div>
-                <div>
-                    <h4 className="font-bold text-slate-800 mb-1">How Scoring Works:</h4>
-                    <p className="font-light leading-relaxed">Impact (Potential Revenue/Time Gain) + Effort (Ease of Implementation). <strong>Score 8-10</strong> are your high-priority Quick Wins. <strong>Score 6-7</strong> are significant Strategic Projects.</p>
-                </div>
+                <h3 className="text-2xl font-bold font-playfair">Reveal Your Growth Roadmap</h3>
+                <p className="text-slate-400 font-light leading-relaxed">We will now analyze your inputs using AI to provide a custom strategy to supercharge your business.</p>
             </div>
         </div>
     );
+
 
     const renderStep6_Governance = () => (
         <div className="space-y-8 animate-slideUp">
@@ -661,10 +465,24 @@ export default function AIAuditTool() {
     );
 
     const renderReport = () => {
-        // Calculate totals
-        const totalHoursSaved = formData.opportunities.reduce((acc, curr) => acc + Number(curr.hours), 0);
-        const estimatedMonthlySavings = totalHoursSaved * formData.hourlyRate;
-        const sortedOpportunities = [...formData.opportunities].sort((a: any, b: any) => (Number(b.impact) + Number(b.effort)) - (Number(a.impact) + Number(a.effort)));
+        const report = formData.reportData;
+
+        if (formData.isAnalyzing) {
+            return (
+                <div className="min-h-screen bg-[#F9F9F7] flex flex-col items-center justify-center space-y-8 animate-fadeIn">
+                    <div className="relative">
+                        <div className="w-32 h-32 border-4 border-[#C5A059]/10 rounded-full animate-spin border-t-[#C5A059]"></div>
+                        <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#D80000] fill-current animate-pulse" size={40} />
+                    </div>
+                    <div className="text-center space-y-2">
+                        <h2 className="text-3xl font-bold font-playfair text-slate-800">Analyzing Your Business...</h2>
+                        <p className="text-slate-500 font-light max-w-sm">Our AI is crunching the numbers and finding growth opportunities for {formData.businessName}.</p>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!report) return null;
 
         return (
             <div className="animate-fadeIn bg-white min-h-screen">
@@ -680,151 +498,106 @@ export default function AIAuditTool() {
                                 <span className="text-2xl font-bold font-playfair tracking-tighter">AI<span className="text-[#C5A059]">AUDIT</span></span>
                             </div>
                             <div>
-                                <h1 className="text-5xl font-bold text-slate-900 font-playfair tracking-tight">AI Readiness Audit</h1>
-                                <p className="text-slate-500 text-xl font-light">Strategic Roadmap for <span className="font-bold text-slate-900">{formData.clientName || 'Valued Client'}</span></p>
+                                <h1 className="text-5xl font-bold text-slate-900 font-playfair tracking-tight">Growth Roadmap</h1>
+                                <p className="text-slate-500 text-xl font-light">Custom Strategy for <span className="font-bold text-slate-900">{formData.businessName}</span></p>
                             </div>
                         </div>
                         <div className="text-right space-y-1">
-                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Report Insight</p>
-                            <p className="text-lg font-bold text-slate-800">{formData.auditorName}</p>
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Date Generated</p>
                             <p className="text-slate-500 font-light">{formData.date}</p>
                         </div>
                     </div>
 
-                    {/* Executive Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                        <div className="bg-[#F9F9F7] p-8 rounded-3xl border border-slate-100 shadow-sm">
-                            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
-                                <DollarSign size={24} />
-                            </div>
-                            <h3 className="text-slate-400 font-bold mb-2 text-xs uppercase tracking-widest">Est. Monthly Savings</h3>
-                            <p className="text-4xl font-black text-slate-900 font-playfair italic">
-                                ${estimatedMonthlySavings.toLocaleString()}
-                            </p>
-                            <p className="text-sm text-slate-500 mt-2 font-light">Based on {totalHoursSaved}h saved @ ${formData.hourlyRate}/hr</p>
-                        </div>
-
-                        <div className="bg-[#F9F9F7] p-8 rounded-3xl border border-slate-100 shadow-sm">
-                            <div className="w-12 h-12 bg-[#C5A059]/10 text-[#C5A059] rounded-2xl flex items-center justify-center mb-6">
-                                <Target size={24} />
-                            </div>
-                            <h3 className="text-slate-400 font-bold mb-2 text-xs uppercase tracking-widest">Priority Focus</h3>
-                            <p className="text-2xl font-black text-slate-900 font-playfair line-clamp-2 italic">
-                                {sortedOpportunities[0]?.title || "N/A"}
-                            </p>
-                            <p className="text-sm text-slate-500 mt-2 font-light">Highest ROI Score: {(Number(sortedOpportunities[0]?.impact) || 0) + (Number(sortedOpportunities[0]?.effort) || 0)}/10</p>
-                        </div>
-
-                        <div className="bg-[#050505] p-8 rounded-3xl shadow-xl shadow-red-100/20 text-white">
-                            <div className="w-12 h-12 bg-[#D80000] text-white rounded-2xl flex items-center justify-center mb-6">
-                                <BarChart3 size={24} />
-                            </div>
-                            <h3 className="text-slate-500 font-bold mb-2 text-xs uppercase tracking-widest">Readiness Score</h3>
-                            <p className="text-4xl font-black text-[#C5A059] font-playfair italic">
-                                {Math.round((formData.systems.filter(s => s.api).length / (formData.systems.length || 1)) * 100)}%
-                            </p>
-                            <p className="text-sm text-slate-500 mt-2 font-light">Infrastructure Connectivity</p>
-                        </div>
-                    </div>
-
-                    {/* Detailed Analysis */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-slate-900 border-l-4 border-[#C5A059] pl-4 font-playfair">Strategic Context</h2>
-                            <div className="space-y-4">
-                                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                    <h4 className="font-bold text-slate-800 text-sm uppercase tracking-widest mb-2">Key Value Drivers</h4>
-                                    <p className="text-slate-600 font-light leading-relaxed whitespace-pre-wrap">{formData.kpis || "No KPIs specified."}</p>
-                                </div>
-                                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                    <h4 className="font-bold text-slate-800 text-sm uppercase tracking-widest mb-2">Primary Inefficiencies</h4>
-                                    <p className="text-slate-600 font-light leading-relaxed whitespace-pre-wrap">{formData.painPoints || "No pain points specified."}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-slate-900 border-l-4 border-[#D80000] pl-4 font-playfair">Infrastructure Readiness</h2>
-                            <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-                                <table className="min-w-full text-sm text-left">
-                                    <thead className="bg-slate-50 font-bold text-slate-400 font-sans">
-                                        <tr>
-                                            <th className="px-6 py-4 uppercase tracking-widest text-xs">System</th>
-                                            <th className="px-6 py-4 uppercase tracking-widest text-xs text-center">API</th>
-                                            <th className="px-6 py-4 uppercase tracking-widest text-xs text-right">Data Health</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 font-sans">
-                                        {formData.systems.map((s, i) => (
-                                            <tr key={i}>
-                                                <td className="px-6 py-4 font-bold text-slate-800">{s.name || "Untitled System"}</td>
-                                                <td className="px-6 py-4 text-center">
-                                                    {s.api ? (
-                                                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">Ready</span>
-                                                    ) : (
-                                                        <span className="bg-slate-100 text-slate-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">None</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-3">
-                                                        <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full ${s.cleanliness >= 7 ? 'bg-emerald-500' : s.cleanliness >= 4 ? 'bg-[#C5A059]' : 'bg-red-500'}`}
-                                                                style={{ width: `${s.cleanliness * 10}%` }}
-                                                            ></div>
-                                                        </div>
-                                                        <span className="text-xs font-bold text-slate-500">{s.cleanliness}/10</span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Automation Roadmap */}
-                    <div className="mb-16 break-inside-avoid">
-                        <h2 className="text-2xl font-bold text-slate-900 border-l-4 border-slate-900 pl-4 font-playfair mb-8">ROI-Driven Automation Roadmap</h2>
-                        <div className="space-y-4">
-                            {sortedOpportunities.map((opp: any, idx: number) => {
-                                const score = Number(opp.impact) + Number(opp.effort);
-                                return (
-                                    <div key={idx} className="flex items-center justify-between p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm hover:shadow-md transition-all">
-                                        <div className="flex items-start gap-6">
-                                            <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-slate-900 text-[#C5A059] rounded-2xl font-black font-playfair shadow-lg">
-                                                {idx + 1}
-                                            </div>
-                                            <div>
-                                                <h4 className="text-xl font-bold text-slate-800 font-playfair mb-1">{opp.title}</h4>
-                                                <div className="flex gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                                    <span className="bg-slate-50 px-3 py-1 rounded-full text-slate-500">{opp.dept}</span>
-                                                    <span className="flex items-center gap-1"><Clock size={12} /> {opp.hours} hrs/mo recovered</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">ROI score</div>
-                                            <div className={`text-4xl font-black font-playfair italic ${score >= 8 ? 'text-emerald-500' : score >= 6 ? 'text-[#C5A059]' : 'text-slate-300'}`}>
-                                                {score}<span className="text-sm text-slate-200 not-italic font-sans">/10</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Final CTA/Footer */}
-                    <div className="bg-[#F9F9F7] p-12 rounded-[3rem] border border-slate-100 text-center space-y-6">
-                        <h3 className="text-3xl font-bold text-slate-900 font-playfair">Ready to Implement?</h3>
-                        <p className="max-w-2xl mx-auto text-slate-500 font-light leading-relaxed">
-                            This report identified a potential <span className="font-bold text-slate-900">${estimatedMonthlySavings.toLocaleString()} in monthly reclaimed value</span>.
-                            The next step is to begin implementation on your Priority #1 opportunity.
+                    {/* Executive Summary */}
+                    <div className="premium-card p-10 bg-[#F9F9F7] border-slate-200 mb-12">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4 font-playfair">Executive Summary</h2>
+                        <p className="text-lg text-slate-600 font-light leading-relaxed italic border-l-4 border-[#C5A059] pl-6 transition-all">
+                            "{report.executiveSummary}"
                         </p>
-                        <div className="pt-4 text-xs font-bold text-slate-300 uppercase tracking-[0.3em]">
-                            Generated by AI Audit Tool • Professional Business Assessment
+                    </div>
+
+                    {/* Recommendations Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <DollarSign className="text-emerald-500" />
+                                Profit & Savings
+                            </h3>
+                            {report.profitRecommendations.map((rec: any, i: number) => (
+                                <div key={i} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all">
+                                    <h4 className="font-bold text-slate-800 mb-2">{rec.title}</h4>
+                                    <p className="text-sm text-slate-500 font-light mb-3">{rec.description}</p>
+                                    <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full inline-block">
+                                        Potential: {rec.benefit}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <Clock className="text-[#C5A059]" />
+                                Time & Operations
+                            </h3>
+                            {report.operationFixes.map((rec: any, i: number) => (
+                                <div key={i} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all">
+                                    <h4 className="font-bold text-slate-800 mb-2">{rec.title}</h4>
+                                    <p className="text-sm text-slate-500 font-light mb-3">{rec.description}</p>
+                                    <div className="text-xs font-bold text-[#C5A059] uppercase tracking-widest bg-[#C5A059]/10 px-3 py-1 rounded-full inline-block">
+                                        Value: {rec.benefit}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* AI Supercharge Section */}
+                    <div className="bg-[#050505] text-white p-12 rounded-[3rem] shadow-2xl relative overflow-hidden mb-16">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D80000]/20 rounded-full blur-3xl -mr-48 -mt-48"></div>
+                        <div className="relative z-10 space-y-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-[#D80000] rounded-2xl flex items-center justify-center">
+                                    <Zap className="fill-current w-8 h-8" />
+                                </div>
+                                <h2 className="text-4xl font-bold font-playfair tracking-tight">AI Supercharge Strategy</h2>
+                            </div>
+                            
+                            <div className="space-y-6">
+                                <p className="text-xl text-slate-300 font-light leading-relaxed">
+                                    {report.aiSupercharge.strategy}
+                                </p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {report.aiSupercharge.implentationSteps.map((step: string, i: number) => (
+                                        <div key={i} className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/10">
+                                            <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center font-bold text-[#C5A059]">
+                                                {i + 1}
+                                            </div>
+                                            <span className="text-sm text-slate-400">{step}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="pt-8 border-t border-white/10">
+                                <div className="bg-[#C5A059]/10 p-8 rounded-3xl border border-[#C5A059]/30">
+                                    <h4 className="text-[#C5A059] font-black uppercase tracking-[0.2em] mb-4 text-sm">Professional Assistance</h4>
+                                    <p className="text-slate-200 font-light leading-relaxed mb-6">
+                                        {report.aiSupercharge.marketingCTA}
+                                    </p>
+                                    <div className="flex flex-wrap gap-4">
+                                        <a href="mailto:hello@jinonet.ai" className="px-6 py-3 bg-[#D80000] text-white rounded-full font-bold hover:bg-white hover:text-black transition-all text-sm">Email Us Now</a>
+                                        <a href="https://wa.me/2349116585600" className="px-6 py-3 bg-emerald-600 text-white rounded-full font-bold hover:bg-white hover:text-black transition-all text-sm">Chat on WhatsApp</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Final Footer */}
+                    <div className="text-center space-y-4">
+                        <div className="text-xs font-bold text-slate-300 uppercase tracking-[0.3em]">
+                            Generated by Jinonet AI Solutions • Custom Growth Audit
                         </div>
                     </div>
                 </div>
@@ -832,8 +605,8 @@ export default function AIAuditTool() {
                 {/* Fixed Action Bar */}
                 <div className="fixed bottom-0 left-0 right-0 p-6 glass-panel border-t border-slate-200/50 flex justify-center gap-6 no-print z-[100]">
                     <button
-                        onClick={() => setStep(step - 1)}
-                        className="btn-outline"
+                        onClick={() => setStep(5)}
+                        className="btn-outline border-slate-200 text-slate-500 hover:text-slate-800"
                     >
                         <ChevronLeft className="w-5 h-5" />
                         Back to Edit
@@ -846,12 +619,13 @@ export default function AIAuditTool() {
                         Download PDF Report
                     </button>
                     <Link href="/" className="btn-outline border-slate-800 text-slate-800 hover:bg-slate-900 hover:text-white">
-                        Return to Homepage
+                        Return to Dashboard
                     </Link>
                 </div>
             </div>
         );
     };
+
 
     // --- Main Layout ---
 
@@ -873,31 +647,29 @@ export default function AIAuditTool() {
                             <span className="text-xl font-bold font-playfair tracking-tighter">AI<span className="text-[#C5A059]">AUDIT</span></span>
                         </div>
                     </div>
-
                     {/* Progress Slider */}
                     <div className="mb-16">
                         <div className="flex justify-between items-end mb-4">
                             <div>
-                                <h3 className="text-sm font-black text-[#C5A059] uppercase tracking-[0.2em] mb-1">Step {step} of 6</h3>
+                                <h3 className="text-sm font-black text-[#C5A059] uppercase tracking-[0.2em] mb-1">Step {step} of 5</h3>
                                 <p className="text-2xl font-bold text-slate-800 font-playfair">
-                                    {step === 1 && "Basic Information"}
-                                    {step === 2 && "Strategic Goals"}
-                                    {step === 3 && "Infrastructure Assessment"}
-                                    {step === 4 && "Workflows & Pain Points"}
-                                    {step === 5 && "ROI Opportunities"}
-                                    {step === 6 && "Risk & Compliance"}
+                                    {step === 1 && "Business Profile"}
+                                    {step === 2 && "Operations & Activities"}
+                                    {step === 3 && "Current Status"}
+                                    {step === 4 && "Tools & Technology"}
+                                    {step === 5 && "Growth & Goals"}
                                 </p>
                             </div>
                             <div className="text-right">
                                 <div className="text-3xl font-black font-playfair italic text-slate-100 leading-none">
-                                    {Math.round((step / 6) * 100)}%
+                                    {Math.round((step / 5) * 100)}%
                                 </div>
                             </div>
                         </div>
                         <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-gradient-to-r from-[#C5A059] to-[#D80000] transition-all duration-700 ease-in-out"
-                                style={{ width: `${(step / 6) * 100}%` }}
+                                style={{ width: `${(step / 5) * 100}%` }}
                             ></div>
                         </div>
                     </div>
@@ -906,12 +678,11 @@ export default function AIAuditTool() {
                     <div className="premium-card p-10 md:p-16 mb-12 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#C5A059]/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                         <div className="relative z-10">
-                            {step === 1 && renderStep1_Info()}
-                            {step === 2 && renderStep2_Strategy()}
-                            {step === 3 && renderStep3_Infrastructure()}
-                            {step === 4 && renderStep4_Workflows()}
-                            {step === 5 && renderStep5_Opportunities()}
-                            {step === 6 && renderStep6_Governance()}
+                            {step === 1 && renderStep1_Profile()}
+                            {step === 2 && renderStep2_Operations()}
+                            {step === 3 && renderStep3_Status()}
+                            {step === 4 && renderStep4_Tools()}
+                            {step === 5 && renderStep5_Goals()}
                         </div>
                     </div>
 
@@ -929,18 +700,25 @@ export default function AIAuditTool() {
                             Previous
                         </button>
                         <button
-                            onClick={() => setStep(step + 1)}
+                            onClick={async () => {
+                                if (step < 5) {
+                                    setStep(step + 1);
+                                } else {
+                                    generateReport();
+                                }
+                            }}
                             className="btn-primary shadow-2xl scale-110"
                         >
-                            {step === 6 ? 'Generate Master Report' : 'Continue to Next Step'}
-                            {step !== 6 ? <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" /> : <Zap size={20} className="fill-current animate-pulse" />}
+                            {step === 5 ? 'Generate Growth Roadmap' : 'Continue to Next Step'}
+                            {step !== 5 ? <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" /> : <Zap size={20} className="fill-current animate-pulse" />}
                         </button>
                     </div>
+
                 </div>
             )}
 
             {/* Report View */}
-            {step === 7 && renderReport()}
+            {step === 6 && renderReport()}
 
         </div>
     );

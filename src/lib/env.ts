@@ -4,9 +4,11 @@ const envSchema = z.object({
     DATABASE_URL: z.string().url(),
     DIRECT_URL: z.string().url(),
     BREVO_API_KEY: z.string().min(1),
-    BREVO_SMTP_LOGIN: z.string().email(), // Brevo SMTP Login Requirement
+    BREVO_SMTP_LOGIN: z.string().email(),
+    OPENAI_API_KEY: z.string().min(1),
     NEXTAUTH_SECRET: z.string().min(1),
-    NEXTAUTH_URL: z.string().url().optional(), // Can be optional in Vercel as it is automatically detected, but better to validate if provided
+    NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
+    NEXTAUTH_URL: z.string().url().optional(),
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 

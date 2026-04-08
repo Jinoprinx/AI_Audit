@@ -56,15 +56,26 @@ export async function POST(req: Request) {
         });
 
         // Send email
-        console.log("[Signup] Sending verification email...");
-        const emailStart = Date.now();
-        await sendVerificationEmail(email, token);
-        console.log(`[Signup] Email sending took ${Date.now() - emailStart}ms`);
+        console.log("[Signup] Sending verification email to:", email);
+        try {
+            await sendVerificationEmail(email, token);
+            console.log("[Signup] Verification email sent successfully");
+        } catch (emailError: any) {
+            console.error("[Signup] WARNING: Verification email failed to send, but user was created in DB:", emailError.message || emailError);
+            // We don't return 500 here because the account is already created.
+            // Returning success allows the user to see the success page and we can offer a "Resend Email" button later.
+        }
 
-        console.log("[Signup] Signup completed successfully");
-        return NextResponse.json({ message: "User created. Verification email sent." }, { status: 201 });
-    } catch (error) {
-        console.error("Signup error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        console.log("[Signup] Signup flow completed successfully for:", email);
+        return NextResponse.json({ 
+            message: "User created successfully. Please check your email for verification.",
+            success: true 
+        }, { status: 201 });
+    } catch (error: any) {
+        console.error("CRITICAL [Signup] Internal Error:", error);
+        return NextResponse.json({ 
+            error: "Internal server error during signup", 
+            message: process.env.NODE_ENV === "development" ? error.message : "Please contact support."
+        }, { status: 500 });
     }
 }

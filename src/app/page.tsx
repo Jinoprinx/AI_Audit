@@ -37,7 +37,6 @@ export default function LandingPage() {
                     <div className="hidden md:flex items-center gap-8">
                         <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">How it works</Link>
                         <Link href="#roi" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">ROI Calculator</Link>
-                        <Link href="#roi" className="text-sm font-medium text-gray-600 hover:text-[#C5A059] transition-colors">ROI Calculator</Link>
                         {session ? (
                             <button
                                 onClick={() => signOut()}

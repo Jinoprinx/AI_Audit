@@ -1,0 +1,83 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: ai-audit
+  ECS_CLUSTER: ai-audit-cluster
+  ECS_SERVICE: ai-audit-service
+  ECS_TASK_DEFINITION: ai-audit-task
+  CONTAINER_NAME: ai-audit-app
+
+permissions:
+  id-token: write # Required for AWS OIDC authentication
+  contents: read  # Required for actions/checkout
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code from GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Authenticate to AWS using OIDC Role Federation
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::682033488698:role/ai-audit-github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Step 3: Log in to Amazon Elastic Container Registry (ECR)
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Step 4: Build, Tag, and Push Docker image to ECR
+      - name: Build, Tag, and Push Image to ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build the Docker image using multi-stage builder
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          
+          # Push both the Commit SHA tag (immutable) and the Latest tag (mutable)
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # Output the image URI for the next rendering step
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # Step 5: Download Active Task Definition from AWS ECS
+      - name: Download Active Task Definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+            --query taskDefinition \
+            --region ${{ env.AWS_REGION }} > task-definition.json
+
+      # Step 6: Render New Task Definition (Updates image URI to the new tag)
+      - name: Fill in the New Image ID in the Amazon ECS Task Definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      # Step 7: Trigger Zero-Downtime Rolling Deployment on ECS Fargate
+      - name: Deploy Amazon ECS Task Definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

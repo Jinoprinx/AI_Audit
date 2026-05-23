@@ -1,0 +1,9 @@
+{
+  "BudgetName": "AI-Audit-Monthly-Budget",
+  "BudgetType": "COST",
+  "BudgetLimit": {
+    "Amount": "1",
+    "Unit": "USD"
+  },
+  "TimeUnit": "MONTHLY"
+}

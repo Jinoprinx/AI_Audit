@@ -1,0 +1,31 @@
+﻿{
+    "events": [
+        {
+            "timestamp": 1779263248157,
+            "message": "  ▲ Next.js 14.2.3",
+            "ingestionTime": 1779263253326
+        },
+        {
+            "timestamp": 1779263248157,
+            "message": "  - Local:        http://ip-10-0-33-229.ec2.internal:3000",
+            "ingestionTime": 1779263253326
+        },
+        {
+            "timestamp": 1779263248157,
+            "message": "  - Network:      http://10.0.33.229:3000",
+            "ingestionTime": 1779263253326
+        },
+        {
+            "timestamp": 1779263248157,
+            "message": " ✓ Starting...",
+            "ingestionTime": 1779263253326
+        },
+        {
+            "timestamp": 1779263248204,
+            "message": " ✓ Ready in 77ms",
+            "ingestionTime": 1779263253326
+        }
+    ],
+    "nextForwardToken": "f/39678896339307353380924050209515988116714652795202568196/s",
+    "nextBackwardToken": "b/39678896338259218356593110921863809357900179804421488640/s"
+}

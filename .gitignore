@@ -35,3 +35,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+*.tfvars.json
+
+# Training files
+AWS_COST_OPTIMIZATION.md
+AWS_DATABASE_LESSON.md
+AWS_ESSENTIALS.md
+AWS_IMPLEMENTATION_PLAN.md
+AWS_JOURNEY_LOG.md
+AWS_TASK_TRACKER.md

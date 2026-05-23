@@ -75,11 +75,12 @@ resource "aws_iam_role_policy" "github_actions" {
         ]
         Resource = "arn:aws:ecr:us-east-1:682033488698:repository/ai-audit"
       },
-      # 2. ECS Permissions: Describe service, register task definition, update service
+      # 2. ECS Permissions: Describe service, describe/register task definition, update service
       {
         Effect = "Allow"
         Action = [
           "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition",
           "ecs:RegisterTaskDefinition",
           "ecs:UpdateService"
         ]
